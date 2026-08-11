@@ -1,0 +1,7 @@
+telethon>=1.36.0
+aiohttp_socks
+aiofiles
+pytz
+Pillow
+python-dotenv
+psutil
