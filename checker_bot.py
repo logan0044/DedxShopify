@@ -91,7 +91,7 @@ def premium_emoji(text):
     return result
 
 SHOPIFY_APIS = [
-    "https://shopify-api-h681.onrender.com/shopify",
+    "https://cozy-abundance-production-ea47.up.railway.app/shopify",
 
 ]
 
