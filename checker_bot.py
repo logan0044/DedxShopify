@@ -1061,6 +1061,68 @@ def get_checker_sites(user_id):
         return user_sites
     return load_sites()
 
+# ==================== /clearallsites - REMOVE ALL GLOBAL SITES ====================
+@bot.on(events.NewMessage(pattern=r'^/clearallsites$'))
+async def clear_all_global_sites(event):
+    # Only Admin can use this
+    if not is_admin(event.sender_id):
+        return
+    
+    try:
+        # Check if file exists
+        if not os.path.exists(SITES_FILE):
+            await event.reply(premium_emoji("⚠️ <b>Sites file not found!</b>\nNo global sites to remove."), parse_mode="html")
+            return
+        
+        # Count before deleting
+        with open(SITES_FILE, 'r', encoding='utf-8', errors='ignore') as f:
+            lines = [line.strip() for line in f if line.strip()]
+        count = len(lines)
+        
+        # Empty the file (this removes ALL sites)
+        with open(SITES_FILE, 'w', encoding='utf-8') as f:
+            f.write("")  # Empty = all sites gone
+        
+        await event.reply(premium_emoji(f"""<b>✅ ALL GLOBAL SITES REMOVED</b>
+━━━━━━━━━━━━━━━━━━━━
+🗑️ <b>Deleted:</b> <code>{count}</code> sites
+📂 <b>File:</b> <code>sites.txt</code>
+━━━━━━━━━━━━━━━━━━━━
+👤 <b>Admin:</b> <a href="tg://user?id={event.sender_id}">{event.sender_id}</a>"""), parse_mode="html")
+    
+    except Exception as e:
+        await event.reply(premium_emoji(f"❌ <b>Error!</b>\n<code>{str(e)[:80]}</code>"), parse_mode="html")
+
+
+# ==================== /clearallusersites - REMOVE ALL USER PERSONAL SITES ====================
+@bot.on(events.NewMessage(pattern=r'^/clearallusersites$'))
+async def clear_all_user_sites_cmd(event):
+    # Only Admin can use this
+    if not is_admin(event.sender_id):
+        return
+    
+    try:
+        if not os.path.exists(USER_SITES_FILE):
+            await event.reply(premium_emoji("⚠️ <b>User sites file not found!</b>"), parse_mode="html")
+            return
+        
+        # Count users
+        with open(USER_SITES_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        user_count = len(data)
+        
+        # Empty all user sites
+        with open(USER_SITES_FILE, 'w', encoding='utf-8') as f:
+            json.dump({}, f)
+        
+        await event.reply(premium_emoji(f"""<b>✅ ALL USER SITES CLEARED</b>
+━━━━━━━━━━━━━━━━━━━━
+🗑️ <b>Users affected:</b> <code>{user_count}</code>
+📂 <b>File:</b> <code>user_sites.json</code>"""), parse_mode="html")
+    
+    except Exception as e:
+        await event.reply(premium_emoji(f"❌ <b>Error!</b>\n<code>{str(e)[:80]}</code>"), parse_mode="html")
+        
 # ==================== /bin - BIN LOOKUP ====================
 @bot.on(events.NewMessage(pattern=r'^/bin\s+(\d{6,8})'))
 async def bin_lookup_cmd(event):
