@@ -549,8 +549,25 @@ async def check_card(card, site, proxy):
         # CHARGED / HIT DETECTION
         # ============================================================
         CHARGED_TRIGGERS = [
-            "charged", "order completed", "order_placed", "order_paid",
-            "order placed", "thank you", "payment successful", "💎"
+            # Basic charged keywords
+            "charged", "charge", "charged successfully", "successfully charged",
+            
+            # Order completion keywords
+            "order completed", "order_placed", "order_paid", "order placed", 
+            "order confirmed", "order is confirmed", "order success",
+            
+            # Payment success keywords
+            "payment successful", "payment captured", "payment_accepted", 
+            "payment complete", "payment completed", "paid", "successfully paid",
+            "transaction successful", "transaction approved", "captured",
+            
+            # Shopify Thank You page keywords
+            "thank you", "thank_you", "thank you for your purchase", "💎", 
+            "thank you for your order", "checkout complete", "checkout completed",
+            
+            # Gateway specific (Stripe, Braintree, etc.)
+            "succeeded", "stripe_charge_id", "pi_succeeded", 
+            "payment_intent_succeeded", "charge_id", "id_token"
         ]
         
         if status == "Charged" or any(x in response_lower for x in CHARGED_TRIGGERS):
@@ -591,11 +608,32 @@ async def check_card(card, site, proxy):
         # APPROVED / LIVE DETECTION
         # ============================================================
         APPROVED_TRIGGERS = [
-            'otp_required', 'approved', 'success', 'invalid_cvv',
-            'incorrect_cvv', 'invalid_cvc', 'incorrect_cvc',
-            'invalid cvv', 'incorrect cvv', 'invalid cvc',
-            'incorrect cvc', 'incorrect_zip', 'incorrect zip',
-            'insufficient_funds', 'insufficient funds'
+            # Generic Approved/Live
+            'approved', 'approval', 'success', 'succeeded', 'live card', 'card is live',
+            
+            # CVV / CVC Errors (Card is live, CVV is wrong)
+            'invalid_cvv', 'incorrect_cvv', 'invalid_cvc', 'incorrect_cvc',
+            'invalid cvv', 'incorrect cvv', 'invalid cvc', 'incorrect cvc',
+            'incorrect_security_code', 'invalid_security_code',
+            'security code is invalid', 'security code invalid',
+            
+            # ZIP / AVS Errors (Card is live, ZIP is wrong)
+            'incorrect_zip', 'incorrect zip', 'invalid_zip', 'invalid zip',
+            'avs_mismatch', 'avs mismatch', 'address_mismatch',
+            'zip code does not match', 'postal code does not match',
+            
+            # Insufficient Funds (Card is live, no money)
+            'insufficient_funds', 'insufficient funds', 'insufficient balance',
+            'insufficient_balance', 'not enough funds',
+            
+            # OTP / 3D Secure (Card is live, requires OTP)
+            'otp_required', 'otp required', 'requires_authentication',
+            'authentication required', 'authentication_required',
+            'three_d_secure', '3d_secure', '3ds', '3d secure',
+            
+            # Generic Bank Declines (Card is live, bank blocked it)
+            'do_not_honor', 'do not honor', 'pickup_card', 'pickup card',
+            'transaction_not_allowed', 'transaction not allowed'
         ]
         
         if status == 'Approved' or any(x in response_lower for x in APPROVED_TRIGGERS):
@@ -3156,7 +3194,6 @@ async def cc_tools_menu(event):
 ➜ Max: 100,000 cards
 
 <code>/fake COUNTRY CODE</code>
-➜ Supports almost all countries
 ➜ Format: /fake gb
 ➜ Supported Country code: us,gb,br,ca,ch,de,dk,es,fi
 fr,ie,in,ir,mx,nl,no,nz,rs,tr,ua
@@ -3164,13 +3201,24 @@ fr,ie,in,ir,mx,nl,no,nz,rs,tr,ua
 <code>/bin BIN NUMBER</code>
 ➜ Get Bin Information
 ➜ Format: /bin 414720
-➜ Bot will show all necessary info.
 
 <code>/filter</code>
 ➜ Reply to .txt CC file
-➜ Removes duplicates
-➜ Removes expired cards
+➜ Removes duplicates &  expired cards
 ➜ Get clean TXT file
+━━━━━━━━━━━━━━━━━━━━
+<code>/clearallsites</code>
+➜ Clear all the global sites ➜ admin only
+
+<code>/removesite <site_url></code>
+➜ Clear single global site ➜ admin only
+
+<code>/premstats</code>
+➜ To see the list of all premium users
+
+<code>/revoke <user_id></code>
+➜ To revoke the premium access of user ➜ admin only
+➜ Ban and unban user command same
 ━━━━━━━━━━━━━━━━━━━━
 <b>💡 Generated CC for testing only!</b>"""
 
@@ -4764,10 +4812,23 @@ async def run_chk(data, sites):
         except: pass
         return
 
-    if is_admin_user or is_prem_user:
-        if len(cards) > 100000: cards = cards[:100000]
+    # ✅ ADMIN: 100k LIMIT
+    if is_admin_user:
+        if len(cards) > 100000: 
+            cards = cards[:100000]
+            
+    # ✅ PREMIUM: 20k LIMIT (STRICT)
+    elif is_prem_user:
+        if len(cards) > 20000:
+            await status_msg.edit(f"❌ <b>Mass Check Limit Exceeded!</b>\n\nPremium users can only check up to <code>20,000</code> cards at once.\nYou tried to check <code>{len(cards)}</code> cards.")
+            try: os.remove(file_path)
+            except: pass
+            return
+            
+    # ✅ FREE USERS: 2k LIMIT
     else:
-        if len(cards) > 2000: cards = cards[:2000]
+        if len(cards) > 2000: 
+            cards = cards[:2000]
 
     try: os.remove(file_path)
     except: pass
@@ -4854,7 +4915,7 @@ async def run_chk(data, sites):
 
                 if res['status'] == 'Charged':
                     all_results['charged'].append(res)
-                    asyncio.create_task(send_realtime_hit_dm(user_id, res, 'Approved', username))
+                    asyncio.create_task(send_realtime_hit_group(user_id, res, 'Charged', username))
                 elif any(x in str(res.get('message', '')).lower() for x in ['error', 'invalid json', '429', '403', '503', 'no valid']):
                     all_results['errors'] += 1
                     all_results['error_cards'].append(res)
