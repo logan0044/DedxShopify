@@ -4915,7 +4915,7 @@ async def run_chk(data, sites):
 
                 if res['status'] == 'Charged':
                     all_results['charged'].append(res)
-                    asyncio.create_task(send_realtime_hit_group(user_id, res, 'Charged', username))
+                    asyncio.create_task(send_realtime_hit_dm(user_id, res, 'Approved', username))
                 elif any(x in str(res.get('message', '')).lower() for x in ['error', 'invalid json', '429', '403', '503', 'no valid']):
                     all_results['errors'] += 1
                     all_results['error_cards'].append(res)
