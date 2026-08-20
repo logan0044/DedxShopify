@@ -91,13 +91,13 @@ def premium_emoji(text):
     return result
 
 SHOPIFY_APIS = [
-    "https://cozy-abundance-production-ea47.up.railway.app/shopify",
+    "https://kirryshopi.up.railway.app/shopify",
 
 ]
 
 API_ID = 36807788
 API_HASH = 'e3a6ed05990c078b4df748fec4e5ef9d'
-BOT_TOKEN = '8649651247:AAHduf7-iGyNUqXRqVvU_906-vorlw_RZ2I'
+BOT_TOKEN = '8999565737:AAGcUj0D3oPVayZbnKt8HBEWYlAkKnUobFQ'
 ADMIN_ID = 7325196842
 KEY_ADMINS = [7325196842]
 FREE_GROUPS = [-1003599982940]
